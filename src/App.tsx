@@ -1,27 +1,34 @@
 import { useState } from "react";
-import { levels, calculateIMC } from "./helpers/imc";
+import { levels, calculateIMC, Level } from "./helpers/imc";
 import { GridItem } from "./components/GridItem/GridItem";
 import leftArrow from './assets/images/leftarrow.png';
 
-let stylesInput = "border-b disabled:opacity-39 w-full border-gray-300 py-3 px-1 mb-8 outline-none";
+const INPUT_STYLES = "border-b disabled:opacity-39 w-full border-gray-300 py-3 px-1 mb-8 outline-none";
 
 function App() {
   const [altura, setAltura] = useState<number>(0);
   const [peso, setPeso] = useState<number>(0);
-  const [showItem, setShowItem] = useState<null>(null);
+  const [showItem, setShowItem] = useState<Level | null>(null);
+  const [error, setError] = useState<string>("");
 
   const handleCalculate = () => {
-    if (peso && altura) {
-      setShowItem(calculateIMC(peso, altura));
-    } else {
-      alert("Preencha os campos corretamente");
+    setError("");
+    if (peso <= 0 || altura <= 0) {
+      setError("Por favor, ingrese valores válidos mayores a 0");
+      return;
     }
+    if (altura > 3) {
+      setError("Por favor, ingrese la altura en metros (ej: 1.75)");
+      return;
+    }
+    setShowItem(calculateIMC(peso, altura));
   };
 
   const handleBack = () => {
     setShowItem(null);
     setAltura(0);
     setPeso(0);
+    setError("");
   };
 
   return (
@@ -46,27 +53,49 @@ function App() {
 
           <div className="w-full md:w-[80%]">
             <input
-              className={stylesInput}
+              className={INPUT_STYLES}
               type="number"
+              min="0"
+              step="0.01"
               placeholder="Digite sua altura. EX: 1.5 (em metros)"
               value={altura > 0 ? altura : ""}
-              onChange={(e) => setAltura(parseFloat(e.target.value))}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value)) {
+                  setAltura(value);
+                }
+              }}
               disabled={showItem ? true : false}
+              aria-label="Altura en metros"
             />
 
             <input
-              className={stylesInput}
+              className={INPUT_STYLES}
               type="number"
+              min="0"
+              step="0.01"
               placeholder="Digite seu peso. EX: 60.3 (em kg)"
               value={peso > 0 ? peso : ""}
-              onChange={(e) => setPeso(parseFloat(e.target.value))}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value);
+                if (!isNaN(value)) {
+                  setPeso(value);
+                }
+              }}
               disabled={showItem ? true : false}
+              aria-label="Peso en kilogramos"
             />
+
+            {error && (
+              <p className="text-red-500 text-sm mb-4">{error}</p>
+            )}
           </div>
+
           <button
             className="w-full md:w-[80%] text-lg disabled:opacity-20 tracking-widest bg-blue-700 text-white py-3 rounded mt-8"
             onClick={handleCalculate}
             disabled={showItem ? true : false}
+            aria-label="Calcular IMC"
           >
             Calcular
           </button>
@@ -84,8 +113,11 @@ function App() {
               <GridItem item={showItem} />
               <div 
                 onClick={handleBack}
-                className="absolute bg-[#227C9D] cursor-pointer hover:scale-105 transition-all hover:bg-blue-400 rounded-full flex items-center justify-center h-16 w-16 md:h-20 md:w-20 left-0 md:-ml-8 md:mt-50">
-                <img src={leftArrow} alt="leftArrow" />
+                className="absolute bg-[#227C9D] cursor-pointer hover:scale-105 transition-all hover:bg-blue-400 rounded-full flex items-center justify-center h-16 w-16 md:h-20 md:w-20 left-0 md:-ml-8 md:mt-50"
+                role="button"
+                aria-label="Volver al inicio"
+              >
+                <img src={leftArrow} alt="Flecha para volver" />
               </div>
             </div>
           )}
